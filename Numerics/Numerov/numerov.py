@@ -108,10 +108,6 @@ def int1dLR(X, V, E, matchi=None):
             classical_bound_index_R = i
             break
 
-    #if (matchi < classical_bound_index_L or matchi > classical_bound_index_R):
-    #    log.error('Match Point not in classical region')
-    #    exit()
-
     Fl = np.zeros_like(X)
     Fr = np.zeros_like(X)
 
@@ -143,6 +139,7 @@ def int1dLR(X, V, E, matchi=None):
 def TEST0():
     print('Running Numerov TEST0')
     import matplotlib.pyplot as plt
+    from multiprocessing import Pool
 
     # Solve harmonic potential, V = (1/2)*k*x^2
 
@@ -155,9 +152,9 @@ def TEST0():
     xMin = -10*math.pi
     xMax =  10*math.pi
 
-    nE = 901
+    nE = 4901
     Emin = 1.0
-    Emax = 10.0
+    Emax = 50.0
     Ens = np.linspace(Emin,Emax,nE)
 
     X = np.linspace(xMin,xMax,nPts)
@@ -181,6 +178,24 @@ def TEST0():
         difs.append(mdif)
         rats.append(mrat)
 
+    # Clip large values
+    if (True):
+        clip = 1.0e2
+        for i in range(len(rats)):
+            if (rats[i] > clip):
+                rats[i] = clip
+            if (rats[i] < -clip):
+                rats[i] = -clip
+        for i in range(len(difs)):
+            if (difs[i] > clip):
+                difs[i] = clip
+            if (difs[i] < -clip):
+                difs[i] = -clip
+        for i in range(len(dets)):
+            if (dets[i] > clip):
+                dets[i] = clip
+            if (dets[i] < -clip):
+                dets[i] = -clip
 
     #rtn = plotSolution(X,V,Fs,Fls,Frs,T)
 
