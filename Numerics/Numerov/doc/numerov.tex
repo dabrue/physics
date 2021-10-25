@@ -1,0 +1,121 @@
+\documentclass[preprint]{revtex4}
+
+\usepackage{graphicx}
+
+\newcommand{\difx}{\frac{{\rm d}}{{\rm d}x}}
+\newcommand{\difxsq}{\frac{{\rm d}^2}{{\rm d}x^2}}
+\newcommand{\phid}[1]{\ensuremath{\phi^{(#1)}}}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{document}
+
+\title{Numerov Algorithm}
+\author{Daniel A. Brue}
+\date{\today}
+\maketitle
+
+The Numerov algorithm is a method for solving second-order differential equations that
+have bounded solutions, i.e. the solutions have {\it compact suppor} and go to zero
+as $x\to\pm\infty$.
+
+Beginning with the time-independent Schr\"odinger equation as a reference 
+second-order linear differential equation, we have in one-dimension, 
+\begin{equation}
+\label{eqn:schrodinger}
+\frac{-\hbar^2}{2m}\difxsq \phi(x) +V(x)\phi(x) = E\phi(x)
+\end{equation}
+
+Our goal is to find the solutions to this equation, $\phi_n(x)$ and their corresponding
+energy eigenvalues, $E_n$. 
+
+For simplicity and clarity, let a superscript denote differentiation, such that
+$\phid{0}(x)\equiv\phi(x)$, $\phid{1}(x) \equiv \difx\phi(x)$, $\phid{2}(x) \equiv \difxsq\phi(x)$, and so on. 
+
+To begin we start with the general Taylor series expansion:
+
+\begin{equation}
+\label{eqn:TaylorPlus}
+    \phid{0}(x+h) = \phid{0}(x)h^0 + \frac{\phid{1}(x)}{1!}h^0 + \frac{\phid{2}(x)}{2!}h^2 + \frac{\phid{3}(x)}{3!}h^3 + \frac{\phid{4}(x)}{4!}h^4 + ...
+\end{equation}
+
+where $h$ is the step away from the value $x$, and if it is small then the additional higher-order corrections get sequentially smaller by 
+a factor of $h$. Naturally, $h^0 = 1$, but is included in the series for notational symmetry.
+The corresponding series for a move in the negative direction would be...
+\begin{equation}
+\label{eqn:TaylorMinus}
+    \phid{0}(x-h) = \phid{0}(x)h^0 - \frac{\phid{1}(x)}{1!}h^0 + \frac{\phid{2}(x)}{2!}h^2 - \frac{\phid{3}(x)}{3!}h^3 + \frac{\phid{4}(x)}{4!}h^4 + ...
+\end{equation}
+
+If we add equations \ref{eqn:TaylorPlus} and \ref{eqn:TaylorMinus}, then we eliminate the odd-exponent factors of $h$, such that
+
+\begin{equation}
+\label{eqn:TaylorThreePoint0}
+    \frac{\phid{0}(x-h) + \phid{0}(x+h)}{2} = \phid{0}(x)h^0 + \frac{\phid{2}(x)}{2!}h^2 + \frac{\phid{4}(x)}{4!}h^4 +  \frac{\phid{6}(x)}{6!} + ...
+\end{equation}
+
+Next, we can apply the same expansions to the second derivative, such that we get
+
+\begin{eqnarray}
+    \phid{2}(x+h) &=& \phid{2}(x)h^0 + \frac{\phid{3}(x)}{1!}h + \frac{\phid{4}(x)}{2!}h^2 + \frac{\phid{5}(x)}{3!}h^3 + \frac{\phid{6}(x)}{4!}h^4 + ... \nonumber \\
+    \phid{2}(x-h) &=& \phid{2}(x)h^0 - \frac{\phid{3}(x)}{1!}h + \frac{\phid{4}(x)}{2!}h^2 - \frac{\phid{5}(x)}{3!}h^3 + \frac{\phid{6}(x)}{4!}h^4 + ... \nonumber 
+\end{eqnarray}
+to get
+\begin{equation}
+\label{eqn:TaylorThreePoint2}
+    \frac{\phid{2}(x-h) + \phid{2}(x+h)}{2} = \phid{2}(x)h^0 + \frac{\phid{4}(x)}{2!}h^2 + \frac{\phid{6}(x)}{4!}h^4 +  \frac{\phid{8}(x)}{6!}h^6 + ...
+\end{equation}
+
+Next, we multiply equation \ref{eqn:TaylorThreePoint2} by a factor of $h^2/12$ and subtract it from equation \ref{eqn:TaylorThreePoint0}, 
+\begin{eqnarray}
+    \left(\frac{\phid{0}(x-h) + \phid{0}(x+h)}{2}\right)  &-& \frac{h^2}{12}\left(\frac{\phid{2}(x-h) + \phid{2}(x+h)}{2}\right)  \nonumber \\
+    = \phid{0}(x)h^0 &+& \frac{\phid{2}(x)}{2}h^2 + \frac{\phid{4}(x)}{24}h^4 +  \frac{\phid{6}(x)}{720} + ... \nonumber \\
+    &-& \frac{\phid{2}(x)}{12}h^2 - \frac{\phid{4}(x)}{24}h^4 - \frac{\phid{6}(x)}{4!}h^6 -  \frac{\phid{8}(x)}{8640}h^8 - ...
+\end{eqnarray}
+
+Note that the $h^4$ term cancels, and we are left with the simplified
+\begin{eqnarray}
+    \left(\frac{\phid{0}(x-h) + \phid{0}(x+h)}{2}\right)  &-& \frac{h^2}{12}\left(\frac{\phid{2}(x-h) + \phid{2}(x+h)}{2}\right)  \nonumber \\
+    = \phid{0}(x)h^0 &+& \frac{5h^2}{12}\phid{2}(x) + O(h^6) 
+    \label{eqn:NumReduct}
+\end{eqnarray}
+
+Next, we go back to the original differential equation. It does not have to be the Schr\"odinger equation, so let us make it more generic and define, 
+\begin{equation}
+    \label{eqn:Tdifeq}
+    \phid{2}(x) = T(x)\phid{0}(x)
+\end{equation}
+
+which in this case gives us
+\begin{equation}
+    \label{eqn:Tdef}
+    T(x) = \frac{2m(V(x)-E)}{\hbar^2}
+\end{equation}
+
+Physically, one can interpret $T(x)$ to be proportional to the negative of the kinetic energy, but can be equally considered an abstract quantity. 
+With the relationship given in equation \ref{eqn:Tdifeq}, we can apply this to equation \ref{eqn:NumReduct} and replace the second-order derivatives
+\begin{eqnarray}
+    \left(\frac{\phid{0}(x-h) + \phid{0}(x+h)}{2}\right)  &-& \frac{h^2}{12}\left(\frac{\phid{2}(x-h) + \phid{2}(x+h)}{2}\right)  \nonumber \\
+    =\left(\frac{\phid{0}(x-h) + \phid{0}(x+h)}{2}\right)  &-& \frac{h^2}{12}\left(\frac{T(x-h)\phid{0}(x-h) + T(x+h)\phid{0}(x+h)}{2}\right)  \nonumber \\
+    = \phid{0}(x)h^0 &+& \frac{5h^2}{12}T(x)\phid{0}(x) + O(h^6) 
+\end{eqnarray}
+
+Next we combine terms based on the $x$ arguments of $\phi$, 
+\begin{eqnarray}
+    \phid{0}(x+h)\left(1-\frac{h^2}{12}T(x+h)\right) &+& \phid{0}(x-h)\left(1-\frac{h^2}{12}T(x-h)\right) \nonumber \\
+    &=& \phid{0}(x)\left(2+\frac{5h^2}{6}T(x)\right) + O(h^6) 
+    \label{eqn:NumerovC}
+\end{eqnarray}
+Where the error is on the order of $h^6$. 
+
+Next we discretize the equation. For any given point, let us assume that $x \to x_n$ and $x\pm h \to x_{n\pm 1}$, so that a step of $h$ 
+on the continuous $x$ spectrum is equivalent to a single index step in the discrete space, e.g. from $x_n$ to $x_{n+1}$. 
+With this change, we can define the function values as discrete points such that $\phi(x) \to \phi_n$, $T(x+h) \to T_{n+1}$, etc. 
+With this, we can write a discrete version of equation \ref{eqn:NumerovC} as
+
+\begin{equation}
+    \phid{0}_{n+1}\left(1-\frac{h^2}{12}T_{n+1}\right) + \phid{0}_{n-1}\left(1-\frac{h^2}{12}T_{n-1}\right) =  \phid{0}_n\left(2+\frac{5h^2}{6}T_n\right)
+\end{equation}
+
+
+\end{document}
