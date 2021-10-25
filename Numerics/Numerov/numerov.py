@@ -137,9 +137,8 @@ def int1dLR(X, V, E, matchi=None):
 
 ####################################################################################################
 def TEST0():
-    print('Running Numerov TEST0')
+    print('Running Numerov TEST0: Components')
     import matplotlib.pyplot as plt
-    from multiprocessing import Pool
 
     # Solve harmonic potential, V = (1/2)*k*x^2
 
@@ -209,6 +208,87 @@ def TEST0():
 
     return 0
 
+####################################################################################################
+def TEST1():
+    print('Running Numerov TEST1: Multiproc')
+    import matplotlib.pyplot as plt
+    import multiprocessing as mp
+
+    # Solve harmonic potential, V = (1/2)*k*x^2
+
+    # INIT VALS -------------------------------
+    nPts = 1001
+    matchi = int(nPts/2)
+    k = 10.0
+    xMin = -10*math.pi
+    xMax =  10*math.pi
+    nE = 4901
+    Emin = 1.0
+    Emax = 50.0
+    Ens = np.linspace(Emin,Emax,nE)
+    X = np.linspace(xMin,xMax,nPts)
+    V = k*X**2/2
+
+    # Create the mulitproc pool, typically number of cpus
+    funcMap = mp.Pool()
+    # Share the potential and space arrays between processes (removes massive duplicates)
+    Vshare = mp.Array(V)
+    Xshare = mp.Array(X)
+
+    def runNum1D(X,V,E):
+        F,Fl,Fr,T = int1dLR(X,V,E)
+        mdif,mrat,mdet = matchLR(X,Fl,Fr,matchi=matchi)
+        return [E,F,mdif,mrat,mdet]
+
+    Fs = []
+    Fls = []
+    Frs = []
+    dets = []
+    rats = []
+    difs = []
+    for i in range(nE):
+        E = Ens[i]
+        print('Energy ',E)
+        F,Fl,Fr,T = int1dLR(X,V,E)
+        Fs.append(F)
+        Fls.append(Fl)
+        Frs.append(Fr)
+        mdif,mrat,mdet = matchLR(X,Fl,Fr,matchi=matchi)
+        dets.append(mdet)
+        difs.append(mdif)
+        rats.append(mrat)
+
+    # Clip large values
+    if (True):
+        clip = 1.0e2
+        for i in range(len(rats)):
+            if (rats[i] > clip):
+                rats[i] = clip
+            if (rats[i] < -clip):
+                rats[i] = -clip
+        for i in range(len(difs)):
+            if (difs[i] > clip):
+                difs[i] = clip
+            if (difs[i] < -clip):
+                difs[i] = -clip
+        for i in range(len(dets)):
+            if (dets[i] > clip):
+                dets[i] = clip
+            if (dets[i] < -clip):
+                dets[i] = -clip
+
+    #rtn = plotSolution(X,V,Fs,Fls,Frs,T)
+
+    fig0=plt.figure()
+    ax0 = fig0.add_subplot(1,1,1)
+    plt.plot(Ens,difs,'r*',label='Differences')
+    plt.plot(Ens,rats,'g.',label='Ratios')
+    plt.plot(Ens,dets,'b.',label='Determinant')
+    #plt.ylim([-10,10])
+    plt.show()
+
+    return 0
 if (__name__ == '__main__'):
     ''' Run some test cases '''
-    rtn=TEST0()
+    #rtn=TEST0()
+    rtn=TEST1()
