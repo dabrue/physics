@@ -9,7 +9,6 @@ import math
 import numpy as np
 import logging
 
-
 def plotSolution(X,V,Fs,Fl,Fr,T):
     import matplotlib.pyplot as plt
 
@@ -55,7 +54,6 @@ def matchLR(X,Fl,Fr,matchi = None):
     mr = tr[2]-tr[0]
     mdiff = ml-mr
     mrat = abs(ml/mr) - 1
-    #mrat = (ml/mr) - 1
     mdet = (tr[0]*tl[2]-tr[2]*tl[0])
 
     return mdiff, mrat, mdet
@@ -209,54 +207,56 @@ def TEST0():
     return 0
 
 ####################################################################################################
+class test1tmp:
+    def __init__(self,X,V,matchi):
+        self.X = X
+        self.V = V
+        self.matchi = matchi
+    def runNum1D(self,E):
+        F,Fl,Fr,T = int1dLR(self.X,self.V,E)
+        mdif,mrat,mdet = matchLR(self.X,Fl,Fr,matchi=self.matchi)
+        return [E,F,mdif,mrat,mdet]
+
+
 def TEST1():
     print('Running Numerov TEST1: Multiproc')
     import matplotlib.pyplot as plt
     import multiprocessing as mp
 
     # Solve harmonic potential, V = (1/2)*k*x^2
+    global X, V
 
     # INIT VALS -------------------------------
     nPts = 1001
-    matchi = int(nPts/2)
+    matchi = int(nPts/2)-2
     k = 10.0
     xMin = -10*math.pi
     xMax =  10*math.pi
-    nE = 4901
-    Emin = 1.0
-    Emax = 50.0
+    nE = 500
+    Emin = 0.10
+    Emax = 10.0
     Ens = np.linspace(Emin,Emax,nE)
+    Elist = list(Ens)
     X = np.linspace(xMin,xMax,nPts)
     V = k*X**2/2
 
-    # Create the mulitproc pool, typically number of cpus
-    funcMap = mp.Pool()
-    # Share the potential and space arrays between processes (removes massive duplicates)
-    Vshare = mp.Array(V)
-    Xshare = mp.Array(X)
+    newTestObj = test1tmp(X,V,matchi)
 
-    def runNum1D(X,V,E):
-        F,Fl,Fr,T = int1dLR(X,V,E)
-        mdif,mrat,mdet = matchLR(X,Fl,Fr,matchi=matchi)
-        return [E,F,mdif,mrat,mdet]
+    nCPU = mp.cpu_count()
+    print('Found ',nCPU,' cpus')
+    with mp.Pool() as pool:
+        rtns = pool.map(newTestObj.runNum1D,Elist)
 
-    Fs = []
-    Fls = []
-    Frs = []
-    dets = []
-    rats = []
+    Fs=[]
     difs = []
-    for i in range(nE):
-        E = Ens[i]
-        print('Energy ',E)
-        F,Fl,Fr,T = int1dLR(X,V,E)
-        Fs.append(F)
-        Fls.append(Fl)
-        Frs.append(Fr)
-        mdif,mrat,mdet = matchLR(X,Fl,Fr,matchi=matchi)
-        dets.append(mdet)
-        difs.append(mdif)
-        rats.append(mrat)
+    rats = []
+    dets = []
+    for rtn in rtns:
+        print('Reading results E=',rtn[0])
+        Fs.append(rtn[1])
+        difs.append(rtn[2])
+        rats.append(rtn[3])
+        dets.append(rtn[4])
 
     # Clip large values
     if (True):
@@ -277,7 +277,7 @@ def TEST1():
             if (dets[i] < -clip):
                 dets[i] = -clip
 
-    #rtn = plotSolution(X,V,Fs,Fls,Frs,T)
+    rtn = plotSolution(X,V,Fs,Fs,Fs,X)
 
     fig0=plt.figure()
     ax0 = fig0.add_subplot(1,1,1)
@@ -288,6 +288,8 @@ def TEST1():
     plt.show()
 
     return 0
+
+####################################################################################################
 if (__name__ == '__main__'):
     ''' Run some test cases '''
     #rtn=TEST0()
